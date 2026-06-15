@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: interiorvision-api-service
+spec:
+  selector:
+    app: interiorvision-api
+  ports:
+    - port: 3000
+      targetPort: 3000
