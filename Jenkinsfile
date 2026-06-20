@@ -1,10 +1,15 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'NodeJS-20'
+    }
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
-        BACKEND_IMAGE = "yourdockerhub/shoesly-backend:latest"
-        FRONTEND_IMAGE = "yourdockerhub/shoesly-frontend:latest"
+
+        BACKEND_IMAGE = "kahboh/shoesly-backend:v1.${BUILD_NUMBER}"
+        FRONTEND_IMAGE = "kahboh/shoesly-frontend:v1.${BUILD_NUMBER}"
     }
 
     stages {
@@ -17,25 +22,25 @@ pipeline {
 
         stage('Test Backend') {
             steps {
-                sh 'cd backend && npm install && npm test || true'
+                dir('backend') {
+                    sh 'npm install || true'
+                    sh 'npm test || true'
+                }
             }
         }
 
-        stage('Build Backend Docker Image') {
+        stage('Build Images') {
             steps {
                 sh 'docker build -t $BACKEND_IMAGE ./backend'
-            }
-        }
-
-        stage('Build Frontend Docker Image') {
-            steps {
                 sh 'docker build -t $FRONTEND_IMAGE ./frontend'
             }
         }
 
-        stage('Login Docker Hub') {
+        stage('Docker Login') {
             steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                sh '''
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                '''
             }
         }
 
@@ -49,11 +54,19 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                kubectl apply -f k8s/
-                kubectl rollout restart deployment interiorvision-api
-                kubectl rollout restart deployment interiorvision-frontend
+                    kubectl set image deployment/interiorvision-api api=$BACKEND_IMAGE
+                    kubectl set image deployment/interiorvision-frontend frontend=$FRONTEND_IMAGE
+
+                    kubectl rollout status deployment/interiorvision-api
+                    kubectl rollout status deployment/interiorvision-frontend
                 '''
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
         }
     }
 }

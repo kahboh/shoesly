@@ -7,6 +7,9 @@ metadata:
 spec:
   replicas: 2
 
+  strategy:
+    type: RollingUpdate
+
   selector:
     matchLabels:
       app: interiorvision-api
@@ -19,8 +22,6 @@ spec:
     spec:
       containers:
         - name: api
-          image: interiorvision-backend:latest
-          imagePullPolicy: Never
-
+          image: kahboh/shoesly-backend:v1
           ports:
             - containerPort: 3000
