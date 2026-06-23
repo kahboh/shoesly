@@ -51,19 +51,16 @@ pipeline {
             }
         }
 
-        /*
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                    kubectl set image deployment/interiorvision-api api=$BACKEND_IMAGE
-                    kubectl set image deployment/interiorvision-frontend frontend=$FRONTEND_IMAGE
+                    kubectl set image deployment/shoesly-backend \
+                    shoesly-backend=$BACKEND_IMAGE
 
-                    kubectl rollout status deployment/interiorvision-api
-                    kubectl rollout status deployment/interiorvision-frontend
+                    kubectl rollout status deployment/shoesly-backend
                 '''
             }
         }
-        */
     }
 
     post {
